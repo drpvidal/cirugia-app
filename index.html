@@ -218,10 +218,14 @@ function rP1(){
 // PASO 2
 function rP2(){
   const f=S.f, cx=fcx(), ay=f.fing?ff(ofx(f.fing,-1)):"";
-  const bhi=HI.map(h=>`<button class="hbtn${f.hing===h?" a":""}" onclick="selHI('${h}')">${h}</button>`).join("")+
-    `<button class="hbtn o${!HI.includes(f.hing)&&f.hing?" a":""}" onclick="selHI('otra')">Otra</button>`;
-  const bhc=HC.map(h=>`<button class="hbtn${f.hcx===h?" a":""}" onclick="selHC('${h}')">${h}</button>`).join("")+
-    `<button class="hbtn o${!HC.includes(f.hcx)&&f.hcx?" a":""}" onclick="selHC('otra')">Otra</button>`;
+  const hiOtra = S.hiOtra || (!HI.includes(f.hing) && f.hing!=="");
+  const hcOtra = S.hcOtra || (!HC.includes(f.hcx) && f.hcx!=="");
+
+  const bhi=HI.map(h=>`<button class="hbtn${f.hing===h&&!hiOtra?" a":""}" onclick="selHI('${h}')">${h}</button>`).join("")+
+    `<button class="hbtn o${hiOtra?" a":""}" onclick="selHI('otra')">Otra</button>`;
+  const bhc=HC.map(h=>`<button class="hbtn${f.hcx===h&&!hcOtra?" a":""}" onclick="selHC('${h}')">${h}</button>`).join("")+
+    `<button class="hbtn o${hcOtra?" a":""}" onclick="selHC('otra')">Otra</button>`;
+
   return`<h2>📅 Fechas y Horas</h2>
   <div style="background:#eef6fa;border-radius:9px;padding:10px 14px;margin-bottom:18px;border:1px solid #d0e4ed;font-size:13px;color:#5a7a8a">
     <strong style="color:#1a2e38">${f.pac}</strong> · ${f.proc}</div>
@@ -229,7 +233,7 @@ function rP2(){
     <input type="date" value="${f.fing}" onchange="S.f.fing=this.value;render()"></div>
   <div class="campo"><label>Hora de ingreso <span class="req">*</span></label>
     <div class="hbtns">${bhi}</div>
-    ${!HI.includes(f.hing)&&f.hing!==''?`<input type="text" style="margin-top:8px;width:100%;padding:11px 14px;border:1.5px solid #d0e4ed;border-radius:8px;font-size:15px;font-family:Georgia,serif" placeholder="HH:MM" value="${f.hing}" oninput="S.f.hing=this.value" maxlength="5">`:''}
+    ${hiOtra?`<input type="text" style="margin-top:8px;width:100%;padding:11px 14px;border:1.5px solid #4a90a4;border-radius:8px;font-size:15px;font-family:Georgia,serif" placeholder="HH:MM" value="${!HI.includes(f.hing)?f.hing:''}" oninput="S.f.hing=this.value" maxlength="5" autofocus>`:''}
   </div>
   <div class="campo"><label>Fecha de cirugía <span class="req">*</span></label>
     <div class="fbtns">
@@ -238,13 +242,13 @@ function rP2(){
       <button class="fbtn${f.opfx==='3'?" a":""}" onclick="S.f.opfx='3';render()">Otra fecha</button>
     </div>
     ${f.opfx==='3'?`<input type="date" value="${f.fcxp}" onchange="S.f.fcxp=this.value;render()">`:
-      cx?`<p class="hint">📅 Fecha de cirugía: <strong>${ff(cx)}</strong></p>`:''}
+      cx?`<p class="hint">Fecha de cirugía: <strong>${ff(cx)}</strong></p>`:''}
   </div>
   <div class="campo"><label>Hora de cirugía <span class="req">*</span></label>
     <div class="hbtns">${bhc}</div>
-    ${!HC.includes(f.hcx)&&f.hcx!==''?`<input type="text" style="margin-top:8px;width:100%;padding:11px 14px;border:1.5px solid #d0e4ed;border-radius:8px;font-size:15px;font-family:Georgia,serif" placeholder="HH:MM" value="${f.hcx}" oninput="S.f.hcx=this.value" maxlength="5">`:''}
+    ${hcOtra?`<input type="text" style="margin-top:8px;width:100%;padding:11px 14px;border:1.5px solid #4a90a4;border-radius:8px;font-size:15px;font-family:Georgia,serif" placeholder="HH:MM" value="${!HC.includes(f.hcx)?f.hcx:''}" oninput="S.f.hcx=this.value" maxlength="5" autofocus>`:''}
   </div>
-  ${ay?`<div class="ayuno">⏰ <strong>Ayuno automático:</strong> 23:30 hrs del día ${ay} (No tomar ni agua)</div>`:''}
+  ${ay?`<div class="ayuno">Ayuno automatico: 23:30 hrs del dia ${ay} (No tomar ni agua)</div>`:''}
   <div class="campo"><label>Color Google Calendar</label>
     <div class="colores">${COLS.map(c=>`<button class="cbtn${f.color===c?" a":""}" style="background:${c}" onclick="S.f.color='${c}';render()"></button>`).join("")}</div>
   </div>`;
@@ -368,8 +372,8 @@ function goP(n){S.paso=n;render();window.scrollTo(0,0);}
 function updEdad(){const e=edad(S.f.nac),b=document.getElementById("edadBox");if(b){b.className="edad-box"+(e===null?" v":"");b.textContent=e!==null?e+" años":"← ingrese fecha de nac.";}}
 function chgProc(v){S.f.proc=v;const p=PROCS.find(x=>x.n===v);S.f.ins=p?[...p.i]:[];render();}
 function chgHosp(v){S.f.hosp=v;const d=document.getElementById("dirHint");if(d){const h=HOSP.find(x=>x.n===v);d.textContent=h?"📍 "+h.d:"";};}
-function selHI(h){if(h==="otra"){S.f.hing="";}else{S.f.hing=h;}render();}
-function selHC(h){if(h==="otra"){S.f.hcx="";}else{S.f.hcx=h;}render();}
+function selHI(h){if(h==="otra"){S.hiOtra=true;S.f.hing="";}else{S.hiOtra=false;S.f.hing=h;}render();}
+function selHC(h){if(h==="otra"){S.hcOtra=true;S.f.hcx="";}else{S.hcOtra=false;S.f.hcx=h;}render();}
 function togEq(n){S.f.equip=S.f.equip.includes(n)?S.f.equip.filter(x=>x!==n):[...S.f.equip,n];render();}
 function delIns(i){S.f.ins.splice(i,1);render();}
 
@@ -388,7 +392,7 @@ async function conf(){
 }
 
 function reset(){
-  S={paso:1,ok:false,env:false,err:"",vd:false,
+  S={paso:1,ok:false,env:false,err:"",vd:false,hiOtra:false,hcOtra:false,
     f:{pac:"",nac:"",tel:"",cor:"",proc:"",hosp:"",fing:"",hing:"",opfx:"1",fcxp:"",hcx:"",color:"#039be5",anest:"",equip:[],ins:[],insex:""}};
   render();window.scrollTo(0,0);
 }
