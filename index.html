@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programación Quirúrgica — Dr. Pablo Vidal González</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; background: linear-gradient(160deg,#e8f4f8 0%,#f0f8fc 60%,#e4f0f6 100%); min-height: 100vh; padding: 20px 16px; color: #1a2e38; }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .header-icon { width: 42px; height: 42px; border-radius: 11px; background: linear-gradient(135deg,#4a90a4,#2a6a7a); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .header h1 { font-size: 17px; font-weight: 700; color: #1a2e38; }
+  .header p { font-size: 12px; color: #5a7a8a; margin-top: 2px; }
+
+  /* Pasos */
+  .pasos { display: flex; background: #fff; border-radius: 11px; border: 1.5px solid #d0e4ed; overflow: hidden; margin-bottom: 18px; }
+  .paso-item { flex: 1; padding: 10px 4px; text-align: center; border-right: 1px solid #d0e4ed; cursor: default; transition: background 0.2s; }
+  .paso-item:last-child { border-right: none; }
+  .paso-item.activo { background: linear-gradient(135deg,#4a90a4,#357a8a); }
+  .paso-item.listo { background: #e8f4f8; cursor: pointer; }
+  .paso-num { font-size: 11px; font-weight: 700; color: #5a7a8a; }
+  .paso-item.activo .paso-num { color: #fff; }
+  .paso-item.listo .paso-num { color: #4a90a4; }
+  .paso-label { font-size: 10px; color: #5a7a8a; margin-top: 2px; }
+  .paso-item.activo .paso-label { color: rgba(255,255,255,0.85); }
+  .paso-item.listo .paso-label { color: #4a90a4; }
+
+  /* Tarjeta */
+  .card { background: #fff; border-radius: 16px; border: 1.5px solid #d0e4ed; padding: 24px; box-shadow: 0 4px 24px rgba(74,144,164,0.08); }
+  .card h2 { font-size: 16px; color: #1a2e38; margin-bottom: 18px; }
+
+  /* Campos */
+  .campo { margin-bottom: 18px; }
+  .campo label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4a90a4; margin-bottom: 6px; }
+  .campo label .req { color: #e05555; margin-left: 4px; }
+  .campo input, .campo select, .campo textarea {
+    width: 100%; padding: 11px 14px; border: 1.5px solid #d0e4ed; border-radius: 8px;
+    font-size: 15px; color: #1a2e38; background: #f7fbfd; outline: none;
+    font-family: Georgia, serif; transition: border-color 0.2s;
+  }
+  .campo input:focus, .campo select:focus, .campo textarea:focus { border-color: #4a90a4; }
+  .campo select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a90a4' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-color: #f7fbfd; padding-right: 36px; }
+  .campo textarea { height: 80px; resize: vertical; line-height: 1.6; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* Edad display */
+  .edad-display { padding: 11px 14px; border: 1.5px solid #b8dcea; border-radius: 8px; background: #eef6fa; color: #4a90a4; font-weight: 700; font-size: 17px; min-height: 46px; display: flex; align-items: center; }
+  .edad-display.vacio { color: #5a7a8a; font-weight: 400; font-size: 12px; }
+
+  /* Direccion hint */
+  .direccion-hint { margin-top: 6px; font-size: 12px; color: #5a7a8a; padding-left: 4px; }
+
+  /* Botones de hora */
+  .hora-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hora-btn { flex: 1; min-width: 60px; padding: 10px 6px; border-radius: 8px; border: 1.5px solid #d0e4ed; background: #fff; color: #1a2e38; font-size: 14px; cursor: pointer; transition: all 0.15s; font-family: Georgia, serif; }
+  .hora-btn.activo { border-color: #4a90a4; background: #eef6fa; color: #4a90a4; font-weight: 700; }
+  .hora-btn.otra { color: #5a7a8a; font-size: 13px; }
+  .hora-input { margin-top: 8px; }
+
+  /* Botones fecha cirugía */
+  .fecha-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .fecha-btn { flex: 1; min-width: 90px; padding: 10px 8px; border-radius: 8px; border: 1.5px solid #d0e4ed; background: #fff; color: #1a2e38; font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: Georgia, serif; }
+  .fecha-btn.activo { border-color: #4a90a4; background: #eef6fa; color: #4a90a4; font-weight: 700; }
+
+  /* Ayuno */
+  .ayuno-box { background: #fff8e8; border: 1px solid #f0d080; border-radius: 9px; padding: 10px 14px; font-size: 13px; color: #8a6a10; margin-bottom: 18px; }
+
+  /* Colores calendario */
+  .colores { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .color-btn { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; outline: none; transition: border 0.15s; }
+  .color-btn.activo { border-color: #1a2e38; }
+
+  /* Equipo checkboxes */
+  .equipo-lista { border: 1.5px solid #d0e4ed; border-radius: 8px; overflow: hidden; }
+  .equipo-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #d0e4ed; transition: background 0.1s; }
+  .equipo-item:last-child { border-bottom: none; }
+  .equipo-item:hover { background: #f7fbfd; }
+  .equipo-item.seleccionado { background: #f0f8fc; }
+  .equipo-item input { width: 16px; height: 16px; accent-color: #4a90a4; cursor: pointer; }
+  .equipo-nombre { flex: 1; font-size: 14px; }
+  .equipo-rol { font-size: 11px; color: #5a7a8a; background: #e0eef4; border-radius: 20px; padding: 2px 10px; }
+
+  /* Invitaciones */
+  .invitaciones { background: #f0f9f5; border: 1px solid #b8e8d4; border-radius: 9px; padding: 12px 16px; margin-top: 12px; }
+  .invitaciones p { font-size: 12px; font-weight: 700; color: #2a7a5a; margin-bottom: 6px; }
+  .invitaciones span { display: block; font-size: 13px; color: #3a6a5a; margin: 2px 0; }
+
+  /* Materiales */
+  .materiales-lista { border: 1.5px solid #d0e4ed; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
+  .material-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #e8f0f4; font-size: 13px; }
+  .material-item:last-child { border-bottom: none; }
+  .material-quitar { background: none; border: none; color: #e05555; cursor: pointer; font-size: 16px; font-weight: 700; padding: 0 4px; }
+
+  /* Resumen */
+  .resumen-card { background: #fff; border-radius: 11px; border: 1.5px solid #d0e4ed; padding: 14px 16px; margin-bottom: 12px; }
+  .resumen-titulo { font-size: 11px; font-weight: 700; color: #4a90a4; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 6px; }
+  .resumen-fila { font-size: 13px; color: #1a2e38; margin: 2px 0; }
+
+  /* Documento preview */
+  .doc-preview { background: #fff; border: 2px solid #c8dce6; border-radius: 10px; padding: 24px 28px; font-size: 13.5px; line-height: 1.85; margin-top: 4px; }
+  .doc-header { text-align: center; border-bottom: 2px solid #1a2e38; padding-bottom: 14px; margin-bottom: 18px; }
+  .doc-header .subtitulo { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #5a7a8a; }
+  .doc-header h3 { font-size: 14.5px; letter-spacing: 0.04em; text-transform: uppercase; margin-top: 7px; }
+  .doc-tabla { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .doc-tabla td { padding: 3px 0; vertical-align: top; }
+  .doc-seccion { font-weight: 700; font-size: 12.5px; border-bottom: 1px solid #d0e4ed; padding-bottom: 3px; margin: 14px 0 6px; }
+  .doc-item { padding-left: 14px; margin: 3px 0; }
+
+  /* Aviso warning */
+  .aviso { background: #fff8e8; border: 1px solid #f0d080; border-radius: 9px; padding: 12px 16px; font-size: 13px; color: #8a6a10; margin-top: 14px; }
+
+  /* Navegación */
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; padding-top: 16px; border-top: 1px solid #d0e4ed; }
+  .nav-counter { font-size: 11px; color: #5a7a8a; }
+  .btn-primary { background: linear-gradient(135deg,#4a90a4,#357a8a); color: #fff; border: none; border-radius: 10px; padding: 13px 28px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia, serif; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary { background: #fff; color: #4a90a4; border: 1.5px solid #4a90a4; border-radius: 10px; padding: 11px 24px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: Georgia, serif; }
+  .btn-secondary.invisible { visibility: hidden; }
+  .btn-confirmar { background: linear-gradient(135deg,#2ecc71,#27ae60); }
+  .btn-full { width: 100%; margin-bottom: 10px; }
+
+  /* Error */
+  .error-box { margin-top: 12px; background: #fef0f0; border: 1px solid #f5c0c0; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #c0392b; }
+
+  /* Confirmación */
+  .confirmacion { text-align: center; padding: 24px 16px 16px; }
+  .confirmacion .check { width: 66px; height: 66px; border-radius: 50%; background: linear-gradient(135deg,#4a90a4,#2ecc8a); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 28px; }
+  .confirmacion h2 { font-size: 19px; color: #1a2e38; margin-bottom: 6px; }
+  .confirmacion .dato { color: #5a7a8a; margin: 2px 0; font-size: 13px; }
+  .acciones-box { background: #f0f9f5; border: 1px solid #b8e8d4; border-radius: 10px; padding: 13px 16px; margin: 18px 0 16px; text-align: left; }
+  .acciones-box p { font-size: 12px; font-weight: 700; color: #2a7a5a; margin-bottom: 8px; }
+  .acciones-box span { display: block; font-size: 13px; color: #3a6a5a; margin: 3px 0; }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .hora-btn { min-width: 50px; font-size: 13px; }
+    .doc-preview { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">🏥</div>
+    <div>
+      <h1>Programación Quirúrgica</h1>
+      <p>Dr. Pablo Vidal González · Sistema automatizado</p>
+    </div>
+  </div>
+
+  <!-- Pasos -->
+  <div class="pasos" id="pasos"></div>
+
+  <!-- Tarjeta principal -->
+  <div class="card" id="contenido"></div>
+
+</div>
+
+<script>
+// ── DATOS ─────────────────────────────────────────────────────
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxhOJevaVUuttmyDXS9DyquBRLBcsJD_aao-g9E3-VOHekc-7xpCiSV6BLV7fIhDUEU/exec";
+
+const HOSPITALES = [
+  { nombre: "Centro Médico ABC Observatorio",       direccion: "Sur 136 No. 116, Colonia Las Américas, Álvaro Obregón, Ciudad de México, C.P. 01120." },
+  { nombre: "Centro Médico ABC Santa Fe",            direccion: "Avenida Carlos Graef Fernández 154, Colonia Santa Fe, Cuajimalpa, Ciudad de México, C.P. 05300." },
+  { nombre: "Hospital Ángeles Lomas",                direccion: "Barranca 240, Colonia Hacienda de las Palmas, Huixquilucan, Estado de México, C.P. 52763." },
+  { nombre: "Hospital San Ángel Inn Patriotismo",    direccion: "Avenida Patriotismo 67, Colonia San Juan, Ciudad de México, C.P. 03730." },
+  { nombre: "Hospital San Ángel Inn Chapultepec",    direccion: "Av. Chapultepec No. 489, Colonia Juárez, Alcaldía Cuauhtémoc, C.P. 06600, Ciudad de México." },
+  { nombre: "Hospital San Ángel Inn Universidad",    direccion: "Mayorazgo 130, Colonia Xoco, Ciudad de México, C.P. 03339." },
+  { nombre: "Hospital San Ángel Inn del Valle",      direccion: "Mier y Pesado 222, Colonia Del Valle Norte, C.P. 03103, Alcaldía Benito Juárez, Ciudad de México." },
+  { nombre: "Cirugía Ambulatoria Medici",            direccion: "Av. Álvaro Obregón 151-Piso 1, Roma Norte, Cuauhtémoc, C.P. 06700, Ciudad de México." },
+];
+
+const EQUIPO = [
+  { nombre: "Dr. Alejandro Jiménez Casillas", rol: "Anestesiólogo", email: "alex050@hotmail.com" },
+  { nombre: "Dr. Enrique Stoopen Margain",    rol: "Ayudante",      email: "dr.enriquestoopen@gmail.com" },
+  { nombre: "Dr. Natan Sarue Saed",           rol: "Ayudante",      email: "natansa@gmail.com" },
+  { nombre: "Dr. Jonathan Chernitsky Camaño", rol: "Ayudante",      email: "jonathanchernitzky@gmail.com" },
+  { nombre: "Consultorio 110 ABC",            rol: "Consultorio",   email: "ABC.Consultorio.110@gmail.com" },
+];
+
+const PROCEDIMIENTOS = [
+  { nombre: "Colecistectomía por laparoscopia", insumos: ["Trócar 11 mm x2","Trócar 5 mm x2","Sistema de irrigación-succión","Solución salina","Bolsa de extracción Endo Catch (1ª opción) / Endo-Pouch (2ª opción)","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Colecistectomía por laparoscopia más colangiografía transoperatoria", insumos: ["Trócar 11 mm x2","Trócar 5 mm x2","Sistema de irrigación-succión","Solución salina","Catéter periférico largo tipo Arrow","Engrapadora de 10 mm","Llave de tres vías","Jeringas de 20 ml x2","Medio de contraste","Fluoroscopía","Bolsa de extracción","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Colecistectomía por laparoscopia más colangiografía transoperatoria más identificación de tejidos por fluorescencia", insumos: ["Trócar 11 mm x2","Trócar 5 mm x2","Sistema de irrigación-succión","Solución salina","Catéter periférico largo tipo Arrow","Engrapadora de 10 mm","Llave de tres vías","Jeringas de 20 ml x2","Medio de contraste","Fluoroscopía","Bolsa de extracción","Verde de indocianina (ICG)","Torre de fluorescencia","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Plastia inguinal bilateral por laparoscopia tipo TAPP", insumos: ["Trócar 11 mm x1","Trócar 5 mm x2","Sistema de irrigación-succión","Solución salina","Malla Progrip 16 cm x2 (1ª opción) / 15 cm x2 (alternativa)","V-Loc 2-0","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Plastia inguinal derecha por laparoscopia tipo TAPP", insumos: ["Trócar 11 mm x1","Trócar 5 mm x2","Sistema de irrigación-succión","Solución salina","Malla Progrip 16 cm (1ª opción) / 15 cm (alternativa)","V-Loc 2-0","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Plastia inguinal izquierda por laparoscopia tipo TAPP", insumos: ["Trócar 11 mm x1","Trócar 5 mm x2","Sistema de irrigación-succión","Solución salina","Malla Progrip 16 cm (1ª opción) / 15 cm (alternativa)","V-Loc 2-0","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Plastia ventral por laparoscopia más colocación de malla (IPOM Plus)", insumos: ["Trócar 11 mm x2","Trócar 5 mm x2","Sistema de irrigación-succión","Solución salina","Malla Proceed 15x15 o 20x15 / Symbotex 20x15","Securestrap (mín. 30 fijaciones o 2 dispositivos)","Endo Close","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Funduplicatura tipo Toupet por laparoscopia", insumos: ["Trócar 11 mm x2","Trócar 5 mm x2","Sistema de irrigación-succión","Solución salina","Separador Nathanson + brazo","Ethibond 2-0 doble armado x10","Bajanudos x2","Energía ultrasónica","Calibrador esofágico 60 Fr","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Funduplicatura tipo Nissen por laparoscopia", insumos: ["Trócar 11 mm x2","Trócar 5 mm x2","Sistema de irrigación-succión","Solución salina","Separador Nathanson + brazo","Ethibond 2-0 doble armado x10","Bajanudos x2","Energía ultrasónica","Calibrador esofágico 60 Fr","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Hemorroidectomía tipo Ferguson", insumos: ["Catgut crómico 3-0","Catgut crómico 4-0","Diprospan","Gasa Espongostan","Procto-Glyvenol","Monomax 0","Prolene 0","Monocryl 3-0","Monocryl 4-0","LigaSure (variante con energía)"] },
+  { nombre: "Exploración anal bajo anestesia", insumos: ["Separador Pratt","Separador Hill-Ferguson","Catgut crómico 3-0","Catgut crómico 4-0","Diprospan","Gasa Espongostan","Procto-Glyvenol","Prolene 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Tiroidectomía total", insumos: ["Neuromonitoreo (NIM)","Tubo endotraqueal con electrodos","LigaSure","Pinzas bipolares","Microinstrumental","Seda 3-0","Seda 4-0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Hemitiroidectomía derecha", insumos: ["Neuromonitoreo (NIM)","Tubo endotraqueal con electrodos","LigaSure","Pinzas bipolares","Microinstrumental","Seda 3-0","Seda 4-0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Hemitiroidectomía izquierda", insumos: ["Neuromonitoreo (NIM)","Tubo endotraqueal con electrodos","LigaSure","Pinzas bipolares","Microinstrumental","Seda 3-0","Seda 4-0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Plastia umbilical", insumos: ["Polipropileno 0 / Prolene 0","Polipropileno 1 / Prolene 1","Monomax 0","Monocryl 3-0","Monocryl 4-0"] },
+  { nombre: "Plastia umbilical con malla", insumos: ["Polipropileno 0 / Prolene 0","Polipropileno 1 / Prolene 1","Monomax 0","Malla Ventral Patch ≥ 6 cm","Monocryl 3-0","Monocryl 4-0"] },
+];
+
+const HORAS_INGRESO  = ["08:00","07:00"];
+const HORAS_CIRUGIA  = ["11:00","10:00","08:00","07:00"];
+const COLORES_CAL    = ["#039be5","#33b679","#e67c73","#f6bf26","#8e24aa","#0b8043","#d50000","#3f51b5"];
+const NOMBRES_PASOS  = ["Paciente","Fechas y Horas","Equipo","Materiales","Resumen"];
+
+// ── ESTADO ────────────────────────────────────────────────────
+let estado = {
+  paso: 1,
+  confirmado: false,
+  enviando: false,
+  error: "",
+  verDoc: false,
+  horaIngresoCustOtra: false,
+  horaCxOtra: false,
+  form: {
+    paciente:"", fechaNac:"", telefono:"", correo:"",
+    procedimiento:"", hospital:"",
+    fechaIngreso:"", horaIngreso:"",
+    opcionFechaCx:"1", fechaCxPersonalizada:"", horaCx:"",
+    colorCalendario:"#039be5",
+    anestesiologo:"", equipo:[],
+    insumos:[], insumosExtra:"",
+  }
+};
+
+// ── HELPERS ───────────────────────────────────────────────────
+function calcularEdad(fechaNac) {
+  if (!fechaNac) return null;
+  const hoy = new Date(), nac = new Date(fechaNac + "T12:00:00");
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  const m = hoy.getMonth() - nac.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+  return edad;
+}
+function formatFecha(s) {
+  if (!s) return "";
+  const [y,m,d] = s.split("-");
+  return `${d}/${m}/${y}`;
+}
+function offsetFecha(s, dias) {
+  if (!s) return "";
+  const d = new Date(s + "T12:00:00");
+  d.setDate(d.getDate() + dias);
+  return d.toISOString().split("T")[0];
+}
+function fechaCxFinal() {
+  const f = estado.form;
+  if (f.opcionFechaCx === "1") return f.fechaIngreso;
+  if (f.opcionFechaCx === "2") return offsetFecha(f.fechaIngreso, 1);
+  return f.fechaCxPersonalizada;
+}
+function mesesEs(mes) {
+  return ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"][mes];
+}
+function fechaLegible(s) {
+  if (!s) return "";
+  const [y,m,d] = s.split("-");
+  return `${parseInt(d)} de ${mesesEs(parseInt(m)-1)} de ${y}`;
+}
+function set(key, val) {
+  estado.form[key] = val;
+  render();
+}
+
+// ── VALIDACIÓN POR PASO ───────────────────────────────────────
+function pasoValido() {
+  const f = estado.form;
+  if (estado.paso === 1) return f.paciente && f.fechaNac && f.procedimiento && f.hospital;
+  if (estado.paso === 2) return f.fechaIngreso && f.horaIngreso && f.horaCx &&
+    (f.opcionFechaCx !== "3" || f.fechaCxPersonalizada);
+  return true;
+}
+
+// ── RENDER PASOS ─────────────────────────────────────────────
+function renderPasos() {
+  const el = document.getElementById("pasos");
+  el.innerHTML = NOMBRES_PASOS.map((nombre, i) => {
+    const n = i + 1;
+    const activo = estado.paso === n;
+    const listo  = estado.paso > n;
+    const cls = activo ? "paso-item activo" : listo ? "paso-item listo" : "paso-item";
+    const onclick = listo ? `onclick="irPaso(${n})"` : "";
+    return `<div class="${cls}" ${onclick}>
+      <div class="paso-num">${listo ? "✓" : n}</div>
+      <div class="paso-label">${nombre}</div>
+    </div>`;
+  }).join("");
+}
+
+// ── RENDER PRINCIPAL ─────────────────────────────────────────
+function render() {
+  if (!estado.confirmado) renderPasos();
+  document.getElementById("pasos").style.display = estado.confirmado ? "none" : "flex";
+
+  const contenido = document.getElementById("contenido");
+  if (estado.confirmado) {
+    contenido.innerHTML = renderConfirmacion();
+  } else {
+    let html = "";
+    if (estado.paso === 1) html = renderPaso1();
+    if (estado.paso === 2) html = renderPaso2();
+    if (estado.paso === 3) html = renderPaso3();
+    if (estado.paso === 4) html = renderPaso4();
+    if (estado.paso === 5) html = renderPaso5();
+    html += renderNav();
+    contenido.innerHTML = html;
+  }
+  bindEvents();
+}
+
+// ── PASO 1: Paciente ─────────────────────────────────────────
+function renderPaso1() {
+  const f = estado.form;
+  const edad = calcularEdad(f.fechaNac);
+  const edadHtml = edad !== null
+    ? `<div class="edad-display">${edad} años</div>`
+    : `<div class="edad-display vacio">← ingrese fecha de nacimiento</div>`;
+
+  const hospitalesOpts = HOSPITALES.map(h =>
+    `<option value="${h.nombre}" ${f.hospital===h.nombre?"selected":""}>${h.nombre}</option>`
+  ).join("");
+  const procOpts = PROCEDIMIENTOS.map(p =>
+    `<option value="${p.nombre}" ${f.procedimiento===p.nombre?"selected":""}>${p.nombre}</option>`
+  ).join("");
+  const direccion = f.hospital ? HOSPITALES.find(h=>h.nombre===f.hospital)?.direccion : "";
+
+  return `
+    <h2>📋 Datos del Paciente</h2>
+    <div class="campo">
+      <label>Nombre completo del paciente <span class="req">*</span></label>
+      <input type="text" id="paciente" placeholder="Apellidos, Nombre" value="${f.paciente}">
+    </div>
+    <div class="grid2">
+      <div class="campo">
+        <label>Fecha de nacimiento <span class="req">*</span></label>
+        <input type="date" id="fechaNac" value="${f.fechaNac}">
+      </div>
+      <div class="campo">
+        <label>Edad (automática)</label>
+        ${edadHtml}
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="campo">
+        <label>Teléfono del paciente</label>
+        <input type="tel" id="telefono" placeholder="55 1234 5678" value="${f.telefono}">
+      </div>
+      <div class="campo">
+        <label>Correo electrónico</label>
+        <input type="email" id="correo" placeholder="correo@ejemplo.com" value="${f.correo}">
+      </div>
+    </div>
+    <div class="campo">
+      <label>Procedimiento quirúrgico <span class="req">*</span></label>
+      <select id="procedimiento">
+        <option value="">— Seleccione procedimiento —</option>
+        ${procOpts}
+      </select>
+    </div>
+    <div class="campo">
+      <label>Hospital <span class="req">*</span></label>
+      <select id="hospital">
+        <option value="">— Seleccione hospital —</option>
+        ${hospitalesOpts}
+      </select>
+      ${direccion ? `<p class="direccion-hint">📍 ${direccion}</p>` : ""}
+    </div>
+  `;
+}
+
+// ── PASO 2: Fechas y horas ────────────────────────────────────
+function renderPaso2() {
+  const f = estado.form;
+  const resumen = `<div style="background:#eef6fa;border-radius:9px;padding:10px 14px;margin-bottom:18px;border:1px solid #d0e4ed;font-size:13px;color:#5a7a8a;">
+    <strong style="color:#1a2e38">${f.paciente}</strong> · ${f.procedimiento}</div>`;
+
+  const horasIngHtml = [...HORAS_INGRESO, "Otra"].map((h,i) => {
+    const esOtra = h === "Otra";
+    const activo = esOtra ? estado.horaIngresoCustOtra : f.horaIngreso === h;
+    return `<button class="hora-btn${activo?" activo":""}${esOtra?" otra":""}" onclick="selHoraIngreso('${h}')">${h}</button>`;
+  }).join("");
+
+  const horasCxHtml = [...HORAS_CIRUGIA, "Otra"].map((h,i) => {
+    const esOtra = h === "Otra";
+    const activo = esOtra ? estado.horaCxOtra : f.horaCx === h;
+    return `<button class="hora-btn${activo?" activo":""}${esOtra?" otra":""}" onclick="selHoraCx('${h}')">${h}</button>`;
+  }).join("");
+
+  const fechaCxFin = fechaCxFinal();
+  const ayunoFecha = f.fechaIngreso ? formatFecha(offsetFecha(f.fechaIngreso, -1)) : "";
+
+  return `
+    <h2>📅 Fechas y Horas</h2>
+    ${resumen}
+    <div class="campo">
+      <label>Fecha de ingreso <span class="req">*</span></label>
+      <input type="date" id="fechaIngreso" value="${f.fechaIngreso}">
+    </div>
+    <div class="campo">
+      <label>Hora de ingreso <span class="req">*</span></label>
+      <div class="hora-btns">${horasIngHtml}</div>
+      ${estado.horaIngresoCustOtra ? `<input type="text" class="hora-input" id="horaIngresoCust" placeholder="HH:MM" value="${!HORAS_INGRESO.includes(f.horaIngreso)?f.horaIngreso:""}" maxlength="5">` : ""}
+    </div>
+    <div class="campo">
+      <label>Fecha de cirugía <span class="req">*</span></label>
+      <div class="fecha-btns">
+        <button class="fecha-btn${f.opcionFechaCx==="1"?" activo":""}" onclick="setFechaCxOp('1')">Mismo día</button>
+        <button class="fecha-btn${f.opcionFechaCx==="2"?" activo":""}" onclick="setFechaCxOp('2')">Día siguiente</button>
+        <button class="fecha-btn${f.opcionFechaCx==="3"?" activo":""}" onclick="setFechaCxOp('3')">Otra fecha</button>
+      </div>
+      ${f.opcionFechaCx==="3" ? `<input type="date" id="fechaCxPersonalizada" value="${f.fechaCxPersonalizada}">` : ""}
+      ${fechaCxFin && f.opcionFechaCx!=="3" ? `<p class="direccion-hint">📅 Fecha de cirugía: <strong>${formatFecha(fechaCxFin)}</strong></p>` : ""}
+    </div>
+    <div class="campo">
+      <label>Hora de cirugía <span class="req">*</span></label>
+      <div class="hora-btns">${horasCxHtml}</div>
+      ${estado.horaCxOtra ? `<input type="text" class="hora-input" id="horaCxCust" placeholder="HH:MM" value="${!HORAS_CIRUGIA.includes(f.horaCx)?f.horaCx:""}" maxlength="5">` : ""}
+    </div>
+    ${ayunoFecha ? `<div class="ayuno-box">⏰ <strong>Ayuno automático:</strong> 23:30 hrs del día ${ayunoFecha} (No tomar ni agua)</div>` : ""}
+    <div class="campo">
+      <label>Color en Google Calendar</label>
+      <div class="colores">
+        ${COLORES_CAL.map(c => `<button class="color-btn${f.colorCalendario===c?" activo":""}" style="background:${c}" onclick="set('colorCalendario','${c}')"></button>`).join("")}
+      </div>
+    </div>
+  `;
+}
+
+// ── PASO 3: Equipo ────────────────────────────────────────────
+function renderPaso3() {
+  const f = estado.form;
+  const anestOpts = EQUIPO.filter(m=>m.rol==="Anestesiólogo").map(m =>
+    `<option value="${m.nombre}" ${f.anestesiologo===m.nombre?"selected":""}>${m.nombre}</option>`
+  ).join("");
+
+  const equipoHtml = EQUIPO.filter(m=>m.rol!=="Anestesiólogo").map(m => {
+    const sel = f.equipo.includes(m.nombre);
+    return `<label class="equipo-item${sel?" seleccionado":""}">
+      <input type="checkbox" ${sel?"checked":""} onchange="toggleEquipo('${m.nombre}')">
+      <span class="equipo-nombre">${m.nombre}</span>
+      <span class="equipo-rol">${m.rol}</span>
+    </label>`;
+  }).join("");
+
+  const invitados = [
+    f.anestesiologo && `• ${f.anestesiologo}`,
+    ...f.equipo.map(n=>`• ${n}`)
+  ].filter(Boolean);
+
+  return `
+    <h2>👥 Equipo Quirúrgico</h2>
+    <div class="campo">
+      <label>Anestesiólogo principal</label>
+      <select id="anestesiologo">
+        <option value="">— Seleccione —</option>
+        ${anestOpts}
+      </select>
+    </div>
+    <div class="campo">
+      <label>Ayudantes y otros participantes</label>
+      <div class="equipo-lista">${equipoHtml}</div>
+    </div>
+    ${invitados.length > 0 ? `
+    <div class="invitaciones">
+      <p>📧 Invitaciones de Google Calendar a:</p>
+      ${invitados.map(i=>`<span>${i}</span>`).join("")}
+    </div>` : ""}
+  `;
+}
+
+// ── PASO 4: Materiales ────────────────────────────────────────
+function renderPaso4() {
+  const f = estado.form;
+  const items = f.insumos.map((ins,i) =>
+    `<div class="material-item">
+      <span>📦 ${ins}</span>
+      <button class="material-quitar" onclick="quitarInsumo(${i})">×</button>
+    </div>`
+  ).join("") || `<p style="text-align:center;color:#5a7a8a;font-size:13px;padding:8px 0">Sin insumos</p>`;
+
+  return `
+    <h2>🧰 Lista de Materiales</h2>
+    <p style="font-size:13px;color:#5a7a8a;margin-bottom:14px">Se incluirán en las <strong>notas del evento</strong> de Google Calendar.</p>
+    <div class="materiales-lista">${items}</div>
+    <div class="campo">
+      <label>Insumos adicionales para este caso</label>
+      <textarea id="insumosExtra" placeholder="Materiales adicionales específicos para este caso...">${f.insumosExtra}</textarea>
+    </div>
+  `;
+}
+
+// ── PASO 5: Resumen ───────────────────────────────────────────
+function renderPaso5() {
+  const f = estado.form;
+  const edad = calcularEdad(f.fechaNac);
+  const fechaCx = fechaCxFinal();
+  const ayunoFecha = f.fechaIngreso ? formatFecha(offsetFecha(f.fechaIngreso, -1)) : "";
+
+  const secciones = [
+    { icon:"👤", titulo:"Paciente", filas:[f.paciente, `${edad} años · Nacido: ${formatFecha(f.fechaNac)}`, f.telefono&&`Tel: ${f.telefono}`, f.correo&&`Email: ${f.correo}`].filter(Boolean) },
+    { icon:"🔪", titulo:"Procedimiento", filas:[f.procedimiento, f.hospital] },
+    { icon:"📅", titulo:"Fechas y Horas", filas:[`Ingreso: ${formatFecha(f.fechaIngreso)} a las ${f.horaIngreso} hrs`,`Cirugía: ${formatFecha(fechaCx)} a las ${f.horaCx} hrs`,`Ayuno: 23:30 hrs del ${ayunoFecha}`] },
+    { icon:"👥", titulo:"Equipo", filas:[f.anestesiologo?`Anestesiólogo: ${f.anestesiologo}`:null,...f.equipo].filter(Boolean) },
+    { icon:"🧰", titulo:"Materiales", filas:[`${f.insumos.length} insumos · en notas del calendario`] },
+  ];
+
+  const resumenHtml = secciones.map(s => `
+    <div class="resumen-card">
+      <div class="resumen-titulo">${s.icon} ${s.titulo}</div>
+      ${s.filas.map(r=>`<div class="resumen-fila">${r}</div>`).join("")}
+    </div>`).join("");
+
+  const docHtml = renderDocumento();
+
+  return `
+    <h2>✅ Resumen y Confirmación</h2>
+    ${resumenHtml}
+    <p style="font-size:11px;font-weight:700;color:#4a90a4;text-transform:uppercase;letter-spacing:0.07em;margin:16px 0 10px">📄 Vista previa — Indicaciones de Ingreso</p>
+    ${docHtml}
+    <div class="aviso">⚡ Al confirmar: Google Calendar + invitaciones al equipo + Google Sheets + documento de indicaciones por correo.</div>
+  `;
+}
+
+// ── DOCUMENTO PREVIEW ─────────────────────────────────────────
+function renderDocumento() {
+  const f = estado.form;
+  const edad = calcularEdad(f.fechaNac);
+  const fechaCx = fechaCxFinal();
+  const hospital = HOSPITALES.find(h=>h.nombre===f.hospital);
+  const ayunoFecha = f.fechaIngreso ? fechaLegible(offsetFecha(f.fechaIngreso, -1)) : "";
+
+  return `
+  <div class="doc-preview">
+    <div class="doc-header">
+      <p class="subtitulo">Dr. Pablo Vidal González · Cirugía General y Laparoscópica</p>
+      <h3>Indicaciones Médicas para Ingreso a Cirugía General</h3>
+    </div>
+    <table class="doc-tabla">
+      <tr>
+        <td width="55%"><strong>Paciente:</strong> ${(f.paciente||"").toUpperCase()}</td>
+        <td><strong>Edad:</strong> ${edad||""} años</td>
+      </tr>
+      <tr>
+        <td><strong>Fecha de ingreso:</strong> ${formatFecha(f.fechaIngreso)}</td>
+        <td><strong>Hora de ingreso:</strong> ${f.horaIngreso} hrs</td>
+      </tr>
+      <tr>
+        <td colspan="2"><strong>Diagnóstico:</strong> ${(f.procedimiento||"").toUpperCase()}</td>
+      </tr>
+    </table>
+    <p class="doc-seccion">1. Ingreso:</p>
+    <p class="doc-item">Ingresar por admisión:</p>
+    <p class="doc-item"><strong>${hospital?.nombre||""}</strong></p>
+    <p class="doc-item" style="color:#5a7a8a;font-size:12.5px">Dirección: ${hospital?.direccion||""}</p>
+    <p class="doc-seccion">2. Procedimiento Quirúrgico:</p>
+    <p class="doc-item">Se opera de <strong>${(f.procedimiento||"").toUpperCase()}</strong> el día <strong>${fechaLegible(fechaCx)}</strong> a las <strong>${f.horaCx} hrs</strong>.</p>
+    <p class="doc-seccion">3. Ayuno:</p>
+    <p class="doc-item">Ayuno a partir de las <strong>23:30 horas</strong> del día <strong>${ayunoFecha}</strong> (No tomar ni agua).</p>
+    <p class="doc-seccion">A su ingreso:</p>
+    <p class="doc-item"><strong>1. Soluciones:</strong> Canalizar con solución Hartmann a 80 ml/hora.</p>
+    <p class="doc-item"><strong>2. Prevención antiembólica:</strong> Medias TED al muslo.</p>
+    <p class="doc-item"><strong>3. Estudios:</strong> BH, QS, Coagulograma, Tele de Tórax, Electrocardiograma.</p>
+    <p class="doc-item"><strong>4. Avisar a su ingreso:</strong> Dr. Pablo Vidal · 55 2271 5257</p>
+  </div>`;
+}
+
+// ── CONFIRMACIÓN ─────────────────────────────────────────────
+function renderConfirmacion() {
+  const f = estado.form;
+  const fechaCx = fechaCxFinal();
+  return `
+  <div class="confirmacion">
+    <div class="check">✓</div>
+    <h2>Cirugía programada</h2>
+    <p class="dato"><strong>${f.paciente}</strong></p>
+    <p class="dato">${f.procedimiento}</p>
+    <p class="dato">${f.hospital}</p>
+    <p class="dato">${formatFecha(fechaCx)} · ${f.horaCx} hrs</p>
+    <div class="acciones-box">
+      <p>✅ Acciones ejecutadas:</p>
+      <span>• Evento creado en Google Calendar con materiales en notas</span>
+      <span>• Invitaciones enviadas al equipo quirúrgico</span>
+      <span>• Registro guardado en Google Sheets</span>
+      <span>• Indicaciones de ingreso enviadas por correo</span>
+    </div>
+    <button class="btn-secondary btn-full" onclick="toggleVerDoc()">${estado.verDoc?"▲ Ocultar documento":"📄 Ver indicaciones de ingreso"}</button>
+    <button class="btn-primary btn-full" onclick="nuevaCirugia()">+ Programar otra cirugía</button>
+    ${estado.verDoc ? renderDocumento() : ""}
+  </div>`;
+}
+
+// ── NAVEGACIÓN ────────────────────────────────────────────────
+function renderNav() {
+  const valido = pasoValido();
+  const esUltimo = estado.paso === 5;
+  const btnAnterior = estado.paso > 1
+    ? `<button class="btn-secondary" onclick="irPaso(${estado.paso-1})">← Anterior</button>`
+    : `<button class="btn-secondary invisible">← Anterior</button>`;
+
+  const btnSiguiente = esUltimo
+    ? `<button class="btn-primary btn-confirmar" onclick="confirmar()" ${estado.enviando?"disabled":""}>
+        ${estado.enviando ? "⏳ Procesando..." : "✅ Confirmar Cirugía"}
+       </button>`
+    : `<button class="btn-primary" onclick="irPaso(${estado.paso+1})" ${!valido?"disabled":""}>Siguiente →</button>`;
+
+  const errorHtml = estado.error
+    ? `<div class="error-box">❌ ${estado.error}</div>`
+    : "";
+
+  return `
+    <div class="nav">
+      ${btnAnterior}
+      <span class="nav-counter">${estado.paso} de 5</span>
+      ${btnSiguiente}
+    </div>
+    ${errorHtml}
+  `;
+}
+
+// ── EVENTOS ───────────────────────────────────────────────────
+function bindEvents() {
+  const bind = (id, key) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", e => set(key, e.target.value));
+  };
+  bind("paciente","paciente"); bind("fechaNac","fechaNac");
+  bind("telefono","telefono"); bind("correo","correo");
+  bind("procedimiento","procedimiento"); bind("hospital","hospital");
+  bind("fechaIngreso","fechaIngreso"); bind("anestesiologo","anestesiologo");
+  bind("insumosExtra","insumosExtra"); bind("fechaCxPersonalizada","fechaCxPersonalizada");
+
+  const hic = document.getElementById("horaIngresoCust");
+  if (hic) hic.addEventListener("input", e => { estado.form.horaIngreso = e.target.value; });
+
+  const hcc = document.getElementById("horaCxCust");
+  if (hcc) hcc.addEventListener("input", e => { estado.form.horaCx = e.target.value; });
+
+  // Auto-cargar insumos al cambiar procedimiento
+  const proc = document.getElementById("procedimiento");
+  if (proc) proc.addEventListener("change", e => {
+    const p = PROCEDIMIENTOS.find(p=>p.nombre===e.target.value);
+    estado.form.insumos = p ? [...p.insumos] : [];
+    render();
+  });
+}
+
+// ── ACCIONES ─────────────────────────────────────────────────
+function irPaso(n) { estado.paso = n; render(); window.scrollTo(0,0); }
+function selHoraIngreso(h) {
+  if (h === "Otra") { estado.horaIngresoCustOtra = true; estado.form.horaIngreso = ""; }
+  else { estado.horaIngresoCustOtra = false; estado.form.horaIngreso = h; }
+  render();
+}
+function selHoraCx(h) {
+  if (h === "Otra") { estado.horaCxOtra = true; estado.form.horaCx = ""; }
+  else { estado.horaCxOtra = false; estado.form.horaCx = h; }
+  render();
+}
+function setFechaCxOp(op) { estado.form.opcionFechaCx = op; render(); }
+function toggleEquipo(nombre) {
+  const eq = estado.form.equipo;
+  estado.form.equipo = eq.includes(nombre) ? eq.filter(n=>n!==nombre) : [...eq, nombre];
+  render();
+}
+function quitarInsumo(i) { estado.form.insumos.splice(i,1); render(); }
+function toggleVerDoc() { estado.verDoc = !estado.verDoc; render(); }
+
+async function confirmar() {
+  estado.enviando = true; estado.error = ""; render();
+  try {
+    const f = estado.form;
+    const payload = { ...f, edad: calcularEdad(f.fechaNac), fechaCirugia: fechaCxFinal() };
+    const resp = await fetch(APPS_SCRIPT_URL, { method:"POST", body: JSON.stringify(payload) });
+    const data = await resp.json();
+    if (data.ok) { estado.confirmado = true; }
+    else { estado.error = "Error: " + (data.error || "Intenta de nuevo"); }
+  } catch(e) {
+    estado.error = "Error de conexión. Verifica tu internet e intenta de nuevo.";
+  }
+  estado.enviando = false;
+  render();
+  window.scrollTo(0,0);
+}
+
+function nuevaCirugia() {
+  estado = { paso:1, confirmado:false, enviando:false, error:"", verDoc:false, horaIngresoCustOtra:false, horaCxOtra:false,
+    form:{ paciente:"",fechaNac:"",telefono:"",correo:"",procedimiento:"",hospital:"",fechaIngreso:"",horaIngreso:"",opcionFechaCx:"1",fechaCxPersonalizada:"",horaCx:"",colorCalendario:"#039be5",anestesiologo:"",equipo:[],insumos:[],insumosExtra:"" }
+  };
+  render(); window.scrollTo(0,0);
+}
+
+// ── INICIO ────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
