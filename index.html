@@ -623,21 +623,36 @@ function renderNav() {
 
 // ── EVENTOS ───────────────────────────────────────────────────
 function bindEvents() {
-  const bind = (id, key) => {
+  // Campos de texto: guardar en estado sin re-renderizar mientras se escribe
+  const bindText = (id, key) => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener("input", e => set(key, e.target.value));
+    if (el) {
+      el.addEventListener("input", e => { estado.form[key] = e.target.value; });
+      el.addEventListener("blur", () => render());
+    }
   };
-  bind("paciente","paciente"); bind("fechaNac","fechaNac");
-  bind("telefono","telefono"); bind("correo","correo");
-  bind("procedimiento","procedimiento"); bind("hospital","hospital");
-  bind("fechaIngreso","fechaIngreso"); bind("anestesiologo","anestesiologo");
-  bind("insumosExtra","insumosExtra"); bind("fechaCxPersonalizada","fechaCxPersonalizada");
+  // Selects y fechas: re-renderizar al cambiar
+  const bindChange = (id, key) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", e => set(key, e.target.value));
+  };
+
+  bindText("paciente","paciente");
+  bindText("telefono","telefono");
+  bindText("correo","correo");
+  bindChange("fechaNac","fechaNac");
+  bindChange("procedimiento","procedimiento");
+  bindChange("hospital","hospital");
+  bindChange("fechaIngreso","fechaIngreso");
+  bindChange("anestesiologo","anestesiologo");
+  bindText("insumosExtra","insumosExtra");
+  bindChange("fechaCxPersonalizada","fechaCxPersonalizada");
 
   const hic = document.getElementById("horaIngresoCust");
-  if (hic) hic.addEventListener("input", e => { estado.form.horaIngreso = e.target.value; });
+  if (hic) { hic.addEventListener("input", e => { estado.form.horaIngreso = e.target.value; }); hic.addEventListener("blur", () => render()); }
 
   const hcc = document.getElementById("horaCxCust");
-  if (hcc) hcc.addEventListener("input", e => { estado.form.horaCx = e.target.value; });
+  if (hcc) { hcc.addEventListener("input", e => { estado.form.horaCx = e.target.value; }); hcc.addEventListener("blur", () => render()); }
 
   // Auto-cargar insumos al cambiar procedimiento
   const proc = document.getElementById("procedimiento");
